@@ -1,6 +1,6 @@
 multinode_mode: true
-undercloud_user: jenkins
-non_root_user: jenkins
+undercloud_user: "{{ lookup('env','USER') }}"
+non_root_user: "{{ lookup('env','USER') }}"
 enable_vbmc: false
 gating_repo_enabled: true
 
@@ -90,24 +90,24 @@ artcl_rsync_logs: false
 artcl_collect_list:
   - /etc/
   - /var/log/
-  - /home/jenkins/.instack/install-undercloud.log
-  - /home/jenkins/stackrc
-  - /home/jenkins/overcloudrc
-  - /home/jenkins/*.log
-  - /home/jenkins/*.txt
-  - /home/jenkins/*.json
-  - /home/jenkins/*.conf
-  - /home/jenkins/*.yml
-  - /home/jenkins/*.yaml
-  - /home/jenkins/*.sh
-  - /home/jenkins/deploy-overcloudrc
-  - /home/jenkins/network-environment.yaml
-  - /home/jenkins/tempest/*.xml
-  - /home/jenkins/tempest/*.html
-  - /home/jenkins/tempest/*.log
-  - /home/jenkins/tempest/*.sh
-  - /home/jenkins/tempest/etc/*.conf
-  - /home/jenkins/local_tht/
+  - "{{ lookup('env','HOME') }}.instack/install-undercloud.log"
+  - "{{ lookup('env','HOME') }}stackrc"
+  - "{{ lookup('env','HOME') }}overcloudrc"
+  - "{{ lookup('env','HOME') }}*.log"
+  - "{{ lookup('env','HOME') }}*.txt"
+  - "{{ lookup('env','HOME') }}*.json"
+  - "{{ lookup('env','HOME') }}*.conf"
+  - "{{ lookup('env','HOME') }}*.yml"
+  - "{{ lookup('env','HOME') }}*.yaml"
+  - "{{ lookup('env','HOME') }}*.sh"
+  - "{{ lookup('env','HOME') }}deploy-overcloudrc"
+  - "{{ lookup('env','HOME') }}network-environment.yaml"
+  - "{{ lookup('env','HOME') }}tempest/*.xml"
+  - "{{ lookup('env','HOME') }}tempest/*.html"
+  - "{{ lookup('env','HOME') }}tempest/*.log"
+  - "{{ lookup('env','HOME') }}tempest/*.sh"
+  - "{{ lookup('env','HOME') }}tempest/etc/*.conf"
+  - "{{ lookup('env','HOME') }}local_tht/"
   - /usr/share/openstack-tripleo-heat-templates/
   - /tmp/*.yml
   - /tmp/*.yaml
