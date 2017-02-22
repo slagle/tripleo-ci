@@ -1,9 +1,9 @@
 - name: Run DLRN gate role and create repo
   hosts: undercloud
   vars:
-    artg_compressed_gating_repo: "/home/jenkins/gating_repo.tar.gz"
-    ansible_user: jenkins
-    ansible_user_dir: /home/jenkins/
+    artg_compressed_gating_repo: "{{ lookup('env','HOME') }}/gating_repo.tar.gz"
+    ansible_user: "{{ lookup('env','USER') }}"
+    ansible_user_dir: "{{ lookup('env','HOME') }}"
     artg_repos_dir: "{{ tripleo_root}}"
 
   roles:
@@ -13,9 +13,9 @@
 - name: Clone the gated DLRN repos and trigger rpm injection
   hosts: undercloud
   vars:
-    artg_compressed_gating_repo: "/home/jenkins/gating_repo.tar.gz"
-    ansible_user: jenkins
-    ansible_user_dir: /home/jenkins/
+    artg_compressed_gating_repo: "{{ lookup('env','HOME') }}/gating_repo.tar.gz"
+    ansible_user: "{{ lookup('env','USER') }}"
+    ansible_user_dir: "{{ lookup('env','HOME') }}"
   tasks:
     - stat: path="{{ artg_compressed_gating_repo }}"
       register: gating_repo_file
@@ -61,9 +61,9 @@
 - name: Install built packages on multinode subnodes
   hosts: overcloud
   vars:
-    artg_compressed_gating_repo: "/home/jenkins/gating_repo.tar.gz"
-    ansible_user: jenkins
-    ansible_user_dir: /home/jenkins/
+    artg_compressed_gating_repo: "{{ lookup('env','HOME') }}/gating_repo.tar.gz"
+    ansible_user: "{{ lookup('env','USER') }}"
+    ansible_user_dir: "{{ lookup('env','HOME') }}"
   tasks:
     - stat: path="{{ artg_compressed_gating_repo }}"
       register: gating_repo_file
