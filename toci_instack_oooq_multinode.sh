@@ -16,6 +16,11 @@ source $TRIPLEO_CI_DIR/tripleo-ci/scripts/common_functions.sh
 # Clear out any puppet modules on the node placed their by infra configuration
 sudo rm -rf /etc/puppet/modules/*
 
+# Need to reinstall requests since it's rm'd in toci_gate_test.sh
+sudo rpm -e --nodeps python-requests || :
+sudo rpm -e --nodeps python2-requests || :
+sudo yum -y install python-requests
+
 # Copy nodepool public key to jenkins user
 sudo cp /etc/nodepool/id_rsa.pub $HOME/.ssh/
 sudo chown $USER:$USER $HOME/.ssh/id_rsa.pub
