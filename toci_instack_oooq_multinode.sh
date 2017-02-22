@@ -39,7 +39,7 @@ sudo chmod 0600 /root/.ssh/authorized_keys
 sudo chown root:root /root/.ssh/authorized_keys
 
 # TODO(bkero): Use an ansible role to create this file
-sudo yum install -y qemu-img
+rpm -q qemu-img || sudo yum install -y qemu-img
 qemu-img create -f qcow2 $HOME/overcloud-full.qcow2 1G
 
 # Bootstrap the subnodes
