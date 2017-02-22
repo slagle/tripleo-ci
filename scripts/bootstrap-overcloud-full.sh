@@ -19,9 +19,9 @@ sudo yum erase -y epel-release || :
 sudo rm -rf /usr/lib/python2.7/site-packages/requests
 # Reinstall python-requests if it was already installed, otherwise it will be
 # installed later when other packages are installed.
-if rpm -q python-requests; then
-    sudo yum reinstall -y python-requests
-fi
+sudo rpm -e --nodeps python-requests || :
+sudo rpm -e --nodeps python2-requests || :
+sudo yum -y install python-requests
 
 # Clear out any puppet modules on the node placed their by infra configuration
 sudo rm -rf /etc/puppet/modules/*
