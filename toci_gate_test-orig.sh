@@ -139,13 +139,14 @@ elif [[ "$TOCI_JOBTYPE" =~ "periodic" && "$TOCI_JOBTYPE" =~ "-nonha" ]]; then
 fi
 
 # Test version of ssh package for bug https://bugzilla.redhat.com/show_bug.cgi?id=1415218
+rpm -q wget || sudo yum install -y wget
 http_proxy= wget -P /tmp -T 60 --tries=3 --progress=dot:mega http://66.187.229.139/test/openssh-6.6.1p1-33.el7.x86_64.rpm
 http_proxy= wget -P /tmp -T 60 --tries=3 --progress=dot:mega http://66.187.229.139/test/openssh-server-6.6.1p1-33.el7.x86_64.rpm
 sudo rpm -ivh --force /tmp/openssh-6.6.1p1-33.el7.x86_64.rpm /tmp/openssh-server-6.6.1p1-33.el7.x86_64.rpm
 
 # start dstat early
 # TODO add it to the gate image building
-sudo yum install -y dstat nmap-ncat #nc is for metrics
+rpm -q dstat nmap-ncat || sudo yum install -y dstat nmap-ncat #nc is for metrics
 mkdir -p "$WORKSPACE/logs"
 dstat -tcmndrylpg --top-cpu-adv --top-io-adv --nocolor | tee --append $WORKSPACE/logs/dstat.log > /dev/null &
 disown
@@ -305,7 +306,7 @@ for JOB_TYPE_PART in $(sed 's/-/ /g' <<< "${TOCI_JOBTYPE:-}") ; do
             export UNDERCLOUD_SANITY_CHECK=1
             ;;
         periodic)
-            export DELOREAN_REPO_URL=https://trunk.rdoproject.org/centos7/consistent
+            export DELOREAN_REPO_URL=http://trunk.rdoproject.org/centos7/consistent
             CACHEUPLOAD=1
             OVERCLOUD_PINGTEST_ARGS=
             ;;
@@ -369,12 +370,15 @@ TIMEOUT_SECS=$((DEVSTACK_GATE_TIMEOUT*60))
 # run it in a separate group to avoid getting killed along with it
 set -m
 
-# install moreutils for timestamping postci.log with ts
-# This comes from epel, so we need to install it before removing that repo
-sudo yum install -y moreutils
+if ! rpm -q moreutils; then
+    # install moreutils for timestamping postci.log with ts
+    # This comes from epel, so we need to install it before removing that repo
+    rpm -q epel-release || sudo yum install -y epel-release
+    sudo yum install -y moreutils
+fi
 
 # Ensure epel-release is not installed
-sudo yum erase -y epel-release || :
+rpm -q epel-release && sudo yum erase -y epel-release || :
 
 if [ "$DEPLOY_OVB_EXTRA_NODE" = '1' ]; then
     # This is usually done in the undercloud install, but we need it at this

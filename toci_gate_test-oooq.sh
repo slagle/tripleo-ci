@@ -42,8 +42,9 @@ sudo rm /etc/yum.repos.d/epel*
 sudo yum clean all
 
 # Install additional packages
-sudo yum install -y \
-    qemu-img # used by multinode to create empty image
+rpm -q qemu-img || \
+    sudo yum install -y \
+        qemu-img # used by multinode to create empty image
 
 # NOTE(pabelanger): Current hack to make centos-7 dib work.
 # TODO(pabelanger): Why is python-requests installed from pip?
