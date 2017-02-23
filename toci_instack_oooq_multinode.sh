@@ -48,7 +48,9 @@ rpm -q qemu-img || sudo yum install -y qemu-img
 qemu-img create -f qcow2 $HOME/overcloud-full.qcow2 1G
 
 # Bootstrap the subnodes
-$TRIPLEO_CI_DIR/tripleo-ci/scripts/tripleo.sh --bootstrap-subnodes 2>&1 | sudo dd of=/var/log/bootstrap-subnodes.log || (tail -n 50 /var/log/bootstrap-subnodes.log && false)
+if [ "$DO_BOOTSTRAP_SUBNODES" = "1" ]; then
+    $TRIPLEO_CI_DIR/tripleo-ci/scripts/tripleo.sh --bootstrap-subnodes 2>&1 | sudo dd of=/var/log/bootstrap-subnodes.log || (tail -n 50 /var/log/bootstrap-subnodes.log && false)
+fi
 
 # Install our test cert so SSL tests work
 sudo cp $TRIPLEO_ROOT/tripleo-ci/test-environments/overcloud-cacert.pem /etc/pki/ca-trust/source/anchors/
