@@ -21,9 +21,9 @@ sudo rpm -e --nodeps python-requests || :
 sudo rpm -e --nodeps python2-requests || :
 sudo yum -y install python-requests
 
-# Copy nodepool public key to jenkins user
-sudo cp /etc/nodepool/id_rsa.pub $HOME/.ssh/
-sudo chown $USER:$USER $HOME/.ssh/id_rsa.pub
+# Copy nodepool keys to current user
+sudo cp /etc/nodepool/id_rsa* $HOME/.ssh/
+sudo chown $USER:$USER $HOME/.ssh/id_rsa*
 
 # TODO(sshnaidm): To create tripleo-ci special yaml config files in oooq
 # for every TOCI_JOBTYPE, i.e. ovb-nonha-ipv6.yml
