@@ -67,13 +67,14 @@ export OPT_WORKDIR=${WORKSPACE}/.quickstart
 export OOOQ_LOGS=${WORKSPACE}/logs/oooq
 export OOO_WORKDIR_LOCAL=$HOME
 export OOOQ_DEFAULT_ARGS=" --working-dir $OPT_WORKDIR --retain-inventory -T none -e working_dir=$OOO_WORKDIR_LOCAL -R ${STABLE_RELEASE:-master}"
+export OOOQ_TAGS=${OOOQ_TAGS:-"build,undercloud-setup,undercloud-scripts,undercloud-install,undercloud-post-install,overcloud-scripts,overcloud-deploy"}
 
 export OOOQ_ARGS=" --working-dir ${OPT_WORKDIR} \
                    -e working_dir=${OOO_WORKDIR_LOCAL} \
                    --bootstrap \
                    --no-clone \
                    --retain-inventory \
-                   --tags build,undercloud-setup,undercloud-scripts,undercloud-install,undercloud-post-install,overcloud-scripts,overcloud-deploy \
+                   --tags $OOOQ_TAGS \
                    --teardown none \
                    --release ${STABLE_RELEASE:-master} \
                    --extra-vars @${TRIPLEO_ROOT}/tripleo-ci/scripts/quickstart/multinode-settings.yml \
