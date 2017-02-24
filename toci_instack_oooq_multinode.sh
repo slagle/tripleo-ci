@@ -140,7 +140,7 @@ if [[ -e ${OOO_WORKDIR_LOCAL}/overcloudrc ]]; then
     $TRIPLEO_CI_DIR/tripleo-ci/scripts/tripleo.sh --overcloud-pingtest &>$OOOQ_LOGS/multinode-overcloud-pingtest.txt
 fi
 
-sudo journalctl -u os-collect-config | sudo tee /var/log/os-collect-config.txt
+sudo /bin/bash -c "journalctl -u os-collect-config > /var/log/os-collect-config.txt"
 
 tar -czf $OOOQ_LOGS/quickstart.tar.gz $OPT_WORKDIR
 
