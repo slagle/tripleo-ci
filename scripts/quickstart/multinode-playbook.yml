@@ -23,6 +23,7 @@
     - undercloud-setup
   environment:
     WORKSPACE: "{{ lookup('env','WORKSPACE') }}"
+    MTU: "{{ lookup('env','MTU') }}"
     SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=Verbose -o PasswordAuthentication=no -o ConnectionAttempts=32 -l {{ lookup('env','USER') }}"
 
 - name: Install the undercloud
