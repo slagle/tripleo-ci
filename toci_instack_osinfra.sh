@@ -157,7 +157,11 @@ sudo update-ca-trust extract
 # The mitaka branch of instack-undercloud does not have the net-config override
 # feature, so we need to add a dummy interface so that os-net-config can
 # add it to the br-ctlplane bridge.
-sudo ip link add ci-dummy type dummy
+if [ "$STABLE_RELEASE" = "mitaka" ]; then
+    if ! ip link show ci-dummy; then
+        sudo ip link add ci-dummy type dummy
+    fi
+fi
 
 $TRIPLEO_ROOT/tripleo-ci/scripts/deploy.sh
 if [[ $CACHEUPLOAD == 1 && can_promote ]] ; then
