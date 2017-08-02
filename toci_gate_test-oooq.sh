@@ -119,8 +119,10 @@ export ENVIRONMENT=""
 export OVERCLOUD_HOSTS=
 export CONTROLLER_HOSTS=
 export SUBNODES_SSH_KEY=
+OVERCLOUD_DEPLOY_TIMEOUT=$((DEVSTACK_GATE_TIMEOUT-90))
 TIMEOUT_SECS=$((DEVSTACK_GATE_TIMEOUT*60))
 export EXTRA_VARS=${EXTRA_VARS:-""}
+export EXTRA_VARS="$EXTRA_VARS --extra-vars deploy_timeout=$OVERCLOUD_DEPLOY_TIMEOUT"
 export NODES_ARGS=""
 export COLLECT_CONF="$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/collect-logs.yml"
 LOCAL_WORKING_DIR="$WORKSPACE/.quickstart"
@@ -275,4 +277,5 @@ else
 fi
 
 echo "Run completed"
-echo "tripleo.${STABLE_RELEASE:-master}.${TOCI_JOBTYPE}.logs.size_mb" "$(du -sm $WORKSPACE/logs | awk {'print $1'})" "$(date +%s)" | nc 66.187.229.172 2003 || true
+# FIXME(bogdando) this prolly should nc over a floating IP in traas
+echo "tripleo.${STABLE_RELEASE:-master}.${TOCI_JOBTYPE}.logs.size_mb" "$(du -sm $WORKSPACE/logs | awk {'print $1'})" "$(date +%s)" | nc 127.0.0.1 2003 || true
