@@ -61,14 +61,6 @@ export NODEPOOL_PROVIDER=${NODEPOOL_PROVIDER:-""}
 # create logs dir (check if collect-logs doesn't already do this)
 mkdir -p $WORKSPACE/logs
 
-# python-os-testr comes centos-openstack-ocata repo, which we need to make sure
-# is installed. After we're done with it, we should remove it
-sudo yum install -y centos-release-openstack-pike
-sudo yum install -y python-os-testr
-sudo yum autoremove -y centos-release-openstack-pike
-# Set job as failed until it's overwritten by pingtest/tempest real test subunit
-generate-subunit $(date +%s) 10 fail pingtest | gzip - > $WORKSPACE/logs/testrepository.subunit.gz
-
 # Remove epel, either by epel-release, or unpackaged repo files
 rpm -q epel-release && sudo yum -y erase epel-release
 sudo rm -f /etc/yum.repos.d/epel*
