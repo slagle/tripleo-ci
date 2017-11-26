@@ -61,6 +61,9 @@ export NODEPOOL_PROVIDER=${NODEPOOL_PROVIDER:-""}
 # create logs dir (check if collect-logs doesn't already do this)
 mkdir -p $WORKSPACE/logs
 
+# Set job as failed until it's overwritten by pingtest/tempest real test subunit
+cat $TRIPLEO_ROOT/tripleo-ci/scripts/fake_fail_subunit | gzip - > $WORKSPACE/logs/testrepository.subunit.gz
+
 # Remove epel, either by epel-release, or unpackaged repo files
 rpm -q epel-release && sudo yum -y erase epel-release
 sudo rm -f /etc/yum.repos.d/epel*
