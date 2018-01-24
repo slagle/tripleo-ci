@@ -1,6 +1,10 @@
+undercloud_type: ovb
+use_testenv_broker: true
+build_test_packages: true
 undercloud_user: "{{ lookup('env','USER') }}"
 non_root_user: "{{ undercloud_user }}"
 ssh_user: "{{ undercloud_user }}"
+existing_key_location: "/etc/nodepool/id_rsa"
 enable_vbmc: false
 gating_repo_enabled: true
 
@@ -14,6 +18,8 @@ non_root_user_setup: false
 step_set_undercloud_hostname: true
 undercloud_hostname: undercloud
 undercloud_docker_registry_mirror: "{{ lookup('env','NODEPOOL_DOCKER_REGISTRY_PROXY') }}"
+run_validate_undercloud: true
+step_overcloud_prep_flavors: false
 
 skip_pingtest_cleanup: true
 # Overcloud deploy
@@ -22,9 +28,6 @@ overcloud_templates_path: /usr/share/openstack-tripleo-heat-templates
 # Network
 # Deploy args
 flavor_args: ""
-
-deploy_timeout: 110
-
 # Images settings
 image_cache_dir: "{{ working_dir }}/images-cache"
 image_cache_dir_cleanup: true
@@ -51,17 +54,22 @@ host_network_interfaces:
   - eth1
   - "{% if network_isolation|default(true)|bool %}eth2{% endif %}"
 mtu_interface: "{{ host_network_interfaces|select()|list }}"
-undercloud_local_mtu: 1350
-overcloud_neutron_global_physnet_mtu: 1350
+undercloud_local_mtu: "{{ mtu }}"
+overcloud_neutron_global_physnet_mtu: "{{ mtu }}"
 floating_ip_cidr: >-
   {%- if network_isolation|default(true)|bool %}10.0.0.0/24
   {%- else %}192.168.24.0/24
   {%- endif %}
-# Commented because it has different paths on zuul v2 and v3
-# Using for now the role default value - http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
-#tempest_test_image_path: /opt/stack/cache/files/cirros-0.3.5-x86_64-disk.img
+tempest_test_image_path: /opt/cache/files/cirros-0.3.5-x86_64-disk.img
 overcloud_image_url: http://192.168.103.253/builds-{{ release }}/current-tripleo/overcloud-full.tar
 ipa_image_url: http://192.168.103.253/builds-{{ release }}/current-tripleo/ipa_images.tar
 
 # We don't need to cleanup TripleO CI
 tempest_track_resources: false
+
+# Deployment metrics
+ara_graphite_prefix: "tripleo.{{ lookup('env', 'STABLE_RELEASE')|default('master', true) }}.{{ lookup('env', 'TOCI_JOBTYPE') }}."
+ara_graphite_server: 66.187.229.172
+
+#build-test packages
+artg_repos_dir: /home/zuul/src/git.openstack.org/openstack

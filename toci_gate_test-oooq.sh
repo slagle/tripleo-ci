@@ -56,13 +56,8 @@ export NODEPOOL_PROVIDER=${NODEPOOL_PROVIDER:-""}
 # create logs dir (check if collect-logs doesn't already do this)
 mkdir -p $WORKSPACE/logs
 
-# python-os-testr comes centos-openstack-ocata repo, which we need to make sure
-# is installed. After we're done with it, we should remove it
-sudo yum install -y centos-release-openstack-pike
-sudo yum install -y python-os-testr
-sudo yum autoremove -y centos-release-openstack-pike
 # Set job as failed until it's overwritten by pingtest/tempest real test subunit
-generate-subunit $(date +%s) 10 fail pingtest | gzip - > $WORKSPACE/logs/testrepository.subunit.gz
+cat $TRIPLEO_ROOT/tripleo-ci/scripts/fake_fail_subunit | gzip - > $WORKSPACE/logs/testrepository.subunit.gz
 
 # Remove epel, either by epel-release, or unpackaged repo files
 rpm -q epel-release && sudo yum -y erase epel-release
@@ -130,21 +125,30 @@ export EXTRA_VARS=${EXTRA_VARS:-""}
 export EXTRA_VARS="$EXTRA_VARS --extra-vars deploy_timeout=$OVERCLOUD_DEPLOY_TIMEOUT"
 export NODES_ARGS=""
 export COLLECT_CONF="$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/collect-logs.yml"
-
+LOCAL_WORKING_DIR="$WORKSPACE/.quickstart"
+LWD=$LOCAL_WORKING_DIR
 
 # Assemble quickstart configuration based on job type keywords
 for JOB_TYPE_PART in $(sed 's/-/ /g' <<< "${TOCI_JOBTYPE:-}") ; do
     case $JOB_TYPE_PART in
         featureset*)
-            FEATURESET_FILE="config/general_config/$JOB_TYPE_PART.yml"
-            FEATURESET_CONF="$FEATURESET_CONF --config $FEATURESET_FILE"
+            FEATURESET_FILE="$LWD/config/general_config/$JOB_TYPE_PART.yml"
+            FEATURESET_CONF="$FEATURESET_CONF --extra-vars @$FEATURESET_FILE"
+
+            # Set UPGRADE_RELEASE if applicable
+            if is_featureset_mixed_upgrade "$TRIPLEO_ROOT/tripleo-quickstart/config/general_config/$JOB_TYPE_PART.yml"; then
+                export UPGRADE_RELEASE=$(previous_release_from "$STABLE_RELEASE")
+                QUICKSTART_RELEASE="$QUICKSTART_RELEASE-undercloud-$UPGRADE_RELEASE-overcloud"
+                # Run overcloud-upgrade tag only in upgrades jobs
+                TAGS="$TAGS,overcloud-upgrade"
+            fi
         ;;
         ovb)
             OVB=1
             ENVIRONMENT="ovb"
             UCINSTANCEID=$(http_proxy= curl http://169.254.169.254/openstack/2015-10-15/meta_data.json | python -c 'import json, sys; print json.load(sys.stdin)["uuid"]')
-            PLAYBOOK="ovb.yml"
-            ENV_VARS="$ENV_VARS --environment $TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/ovb.yml"
+            PLAYBOOK="baremetal-full-deploy.yml"
+            ENV_VARS="$ENV_VARS --extra-vars @$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/ovb.yml"
             if [[ -f  "$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/ovb-$RHCLOUD.yml" ]]; then
                 ENV_VARS="$ENV_VARS --extra-vars @$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/ovb-$RHCLOUD.yml"
             fi
@@ -154,17 +158,14 @@ for JOB_TYPE_PART in $(sed 's/-/ /g' <<< "${TOCI_JOBTYPE:-}") ; do
             SUBNODES_SSH_KEY=/etc/nodepool/id_rsa
             ENVIRONMENT="osinfra"
             PLAYBOOK="multinode.yml"
-            FEATURESET_CONF="
-                --extra-vars @config/general_config/featureset-multinode-common.yml
-                $FEATURESET_CONF
-            "
+            FEATURESET_CONF=" --extra-vars @$LWD/config/general_config/featureset-multinode-common.yml $FEATURESET_CONF"
             if [[ $NODEPOOL_PROVIDER == "rdo-cloud-tripleo" ]]; then
-                ENV_VARS="$ENV_VARS --environment $TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode-rdocloud.yml"
+                ENV_VARS="$ENV_VARS --extra-vars @$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode-rdocloud.yml"
             else
-                ENV_VARS="$ENV_VARS --environment $TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode.yml"
+                ENV_VARS="$ENV_VARS --extra-vars @$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode.yml"
             fi
             UNDERCLOUD="127.0.0.2"
-            TAGS="build,undercloud-setup,undercloud-scripts,undercloud-install,undercloud-post-install,tripleo-validations,overcloud-scripts,overcloud-prep-config,overcloud-prep-containers,overcloud-deploy,overcloud-upgrade,overcloud-validate"
+            TAGS="build,undercloud-setup,undercloud-scripts,undercloud-install,undercloud-post-install,tripleo-validations,overcloud-scripts,overcloud-prep-config,overcloud-prep-containers,overcloud-deploy,overcloud-validate"
             CONTROLLER_HOSTS=$(sed -n 1,1p /etc/nodepool/sub_nodes_private)
             OVERCLOUD_HOSTS=$(cat /etc/nodepool/sub_nodes_private)
         ;;
@@ -172,48 +173,37 @@ for JOB_TYPE_PART in $(sed 's/-/ /g' <<< "${TOCI_JOBTYPE:-}") ; do
             ENVIRONMENT="osinfra"
             UNDERCLOUD="127.0.0.2"
             PLAYBOOK="multinode.yml"
-            FEATURESET_CONF="
-                --extra-vars @config/general_config/featureset-multinode-common.yml
-                $FEATURESET_CONF
-            "
+            FEATURESET_CONF=" --extra-vars @$LWD/config/general_config/featureset-multinode-common.yml $FEATURESET_CONF"
             if [[ $NODEPOOL_PROVIDER == "rdo-cloud-tripleo" ]]; then
-                ENV_VARS="$ENV_VARS --environment $TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode-rdocloud.yml"
+                ENV_VARS="$ENV_VARS --extra-vars @$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode-rdocloud.yml"
             else
-                ENV_VARS="$ENV_VARS --environment $TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode.yml"
+                ENV_VARS="$ENV_VARS --extra-vars @$TRIPLEO_ROOT/tripleo-ci/toci-quickstart/config/testenv/multinode.yml"
             fi
             TAGS="build,undercloud-setup,undercloud-scripts,undercloud-install,undercloud-validate,images"
         ;;
         periodic)
             PERIODIC=1
-            if [[ -z ${DELOREAN_LINK:-''} ]]; then
-                QUICKSTART_RELEASE="consistent-${QUICKSTART_RELEASE}"
-            else
-                QUICKSTART_RELEASE="promotion-testing-hash-${QUICKSTART_RELEASE}"
-            fi
+            QUICKSTART_RELEASE="promotion-testing-hash-${QUICKSTART_RELEASE}"
         ;;
         gate)
         ;;
         *)
         # the rest should be node configuration
-            NODES_FILE="config/nodes/$JOB_TYPE_PART.yml"
+            NODES_FILE="$TRIPLEO_ROOT/tripleo-quickstart/config/nodes/$JOB_TYPE_PART.yml"
         ;;
     esac
 done
 
-# Set UPGRADE_RELEASE if applicable
-if is_featureset_mixed_upgrade "$TRIPLEO_ROOT/tripleo-quickstart/$FEATURESET_FILE"; then
-    export UPGRADE_RELEASE=$(previous_release_from "$STABLE_RELEASE")
-    QUICKSTART_RELEASE="$QUICKSTART_RELEASE-undercloud-$UPGRADE_RELEASE-overcloud"
-fi
 
 if [[ ! -z $NODES_FILE ]]; then
     pushd $TRIPLEO_ROOT/tripleo-quickstart
     NODECOUNT=$(shyaml get-value node_count < $NODES_FILE)
     popd
-    NODES_ARGS="--nodes $NODES_FILE"
+    NODES_ARGS="--extra-vars @$NODES_FILE"
 fi
 
-
+# Start time tracking
+export STATS_TESTENV=$(date +%s)
 pushd $TRIPLEO_ROOT/tripleo-ci
 if [ -z "${TE_DATAFILE:-}" -a "$ENVIRONMENT" = "ovb" ] ; then
 
@@ -231,6 +221,10 @@ if [ -z "${TE_DATAFILE:-}" -a "$ENVIRONMENT" = "ovb" ] ; then
     ./testenv-client -b $GEARDSERVER:4730 -t $TIMEOUT_SECS \
         --envsize $NODECOUNT --ucinstance $UCINSTANCEID \
         --net-iso $NETISO_ENV -- ./toci_quickstart.sh
+elif [ "$ENVIRONMENT" = "ovb" ] ; then
+    # We only support multi-nic at the moment
+    NETISO_ENV="multi-nic"
+    ./toci_quickstart.sh
 else
     # multinode preparation
     # Clear out any puppet modules on the node placed their by infra configuration
@@ -283,3 +277,5 @@ else
 fi
 
 echo "Run completed"
+# FIXME(bogdando) this prolly should nc over a floating IP in traas
+echo "tripleo.${STABLE_RELEASE:-master}.${TOCI_JOBTYPE}.logs.size_mb" "$(du -sm $WORKSPACE/logs | awk {'print $1'})" "$(date +%s)" | nc 127.0.0.1 2003 || true

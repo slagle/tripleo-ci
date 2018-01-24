@@ -1,0 +1,47 @@
+- name: Collect logs
+  hosts: primary
+  tasks:
+
+    - name: Run ansible playbook to collect logs
+      shell: |
+        if [[ -e {{ ansible_user_dir }}/workspace/logs/collect_logs.sh ]]; then
+          bash {{ ansible_user_dir }}/workspace/logs/collect_logs.sh
+        fi
+
+- hosts:
+    - primary
+    - tripleo-centos-7
+    - centos-7
+  tasks:
+
+    - name: Ensure artifacts directory exists
+      file:
+        path: '{{ zuul.executor.work_root }}/artifacts'
+        state: directory
+      delegate_to: localhost
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.work_root }}/artifacts/images/'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=/images/*
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
+
+    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+      synchronize:
+        src: '{{ ansible_user_dir }}/workspace/'
+        dest: '{{ zuul.executor.log_root }}'
+        mode: pull
+        copy_links: true
+        verify_host: true
+        rsync_opts:
+          - --include=/logs/**
+          - --include=*/
+          - --exclude=*
+          - --prune-empty-dirs
